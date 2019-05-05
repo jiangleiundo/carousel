@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zn-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        ul, li, ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .container {
+            width: 522px;
+            height: 202px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container > div:nth-of-type(1) {
+            overflow: hidden;
+        }
+
+        .container ul {
+            font-size: 0;
+            width: 400%;
+            transition: all .35s ease-in-out;
+        }
+
+        .container ul li {
+            float: left;
+            overflow: hidden;
+        }
+
+        .container ul li img {
+            width: 500px;
+            height: 180px;
+        }
+
+        .container ol {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+        }
+
+        .container ol li {
+            cursor: pointer;
+            display: inline-block;
+            padding: 2px 6px;
+            text-align: center;
+            margin-right: 6px;
+            font-size: 14px;
+            background: #eeeeee;
+        }
+
+        .container ol li.active {
+            background: #DB192A;
+            color: #ddd;
+        }
+
+        .container > div:nth-of-type(2) {
+            width: 100%;
+            padding: 0 10px;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translate(0, -50%);
+            /*display: flex;*/
+            justify-content: space-between;
+            display: none;
+        }
+
+        .container > div:nth-of-type(2) > span {
+            padding: 6px;
+            font-size: 20px;
+            background: rgba(255, 255, 255, .6);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="screen">
+        <ul>
+            <li><img src="./img/1.jpg" alt=""></li>
+            <li><img src="./img/2.jpg" alt=""></li>
+            <li><img src="./img/3.jpg" alt=""></li>
+        </ul>
+        <ol>
+            <!--<li class="active">1</li>-->
+            <!--<li>2</li>-->
+            <!--<li>3</li>-->
+        </ol>
+    </div>
+    <div>
+        <span>&lt;</span>
+        <span>&gt;</span>
+    </div>
+</div>
+
+<script>
+    function Carousel(el) {
+        this.screen = el; // 相框
+        this.width = this.screen.offsetWidth; // 相框宽度
+        this.ulBox = this.screen.children[0]; // ul盒子
+        this.list = this.ulBox.children; // ul下面所有li
+        this.olBox = this.screen.children[1]; // 数字按钮盒子
+        this.arrow = this.screen.nextElementSibling; // 箭头盒子
+        this.leftArraw = this.arrow.children[0]; // 左箭头
+        this.rightArraw = this.arrow.children[1]; // 右箭头
+        this.index = 0; // 数字按钮的索引
+        this.timeId = null; // 定时器的id
+        this.activeClass = 'active'; // 数字按钮class名
+        this.durtion = '.35s'; // 动画持续时间
+    }
+
+    // 初始化
+    Carousel.prototype.init = function () {
+        this.createNodes();
+        this.bindEvent();
+        this.timeId = setInterval(this.clickHandle.bind(this), 2000);
+        // 注意这里要bind(this) 否则clickHandle中的this指向window
+    };
+
+    // 动画
+    Carousel.prototype.animate = function (target) {
+        this.ulBox.style.transform = 'translateX(' + target + 'px)'
+    };
+
+    // 创建节点
+    Carousel.prototype.createNodes = function () {
+        let self = this;
+        // 创建按钮节点
+        for (let i = 0; i < self.list.length; i++) {
+            let liObj = document.createElement('li');
+            liObj.innerText = i + 1;
+            self.olBox.appendChild(liObj);
+
+            // 为生成的数字按钮添加点击事件
+            liObj.onclick = function () {
+                self.index = this.innerText - 1; // 获取当前点击对象的索引值
+                self.switch_sel();
+                self.animate(-self.index * self.width);
+            };
+        }
+
+        // 默认选中第一个
+        self.olBox.children[0].className = self.activeClass;
+        // 克隆第一张图放到ulBox后面，实现无缝轮播
+        self.ulBox.appendChild(self.ulBox.children[0].cloneNode(true));
+    };
+
+    // 事件绑定
+    Carousel.prototype.bindEvent = function () {
+        let self = this;
+        // 右点击
+        self.rightArraw.onclick = function () {
+            self.clickHandle();
+        };
+        // 左点击
+        self.leftArraw.onclick = function(){
+            if(self.index === 0){
+                self.index = self.list.length - 1;
+
+                // 直接跳到最后一张
+                self.ulBox.style.transitionDuration = '0s';
+                self.animate(-self.index * self.width);
+            }
+
+            setTimeout(function(){
+                self.ulBox.style.transitionDuration = self.durtion;
+                self.index--;
+                self.animate(-self.index * self.width);
+                self.switch_sel();
+            }, 20);
+        };
+
+        // 鼠标悬停清除定时器
+        self.screen.parentElement.onmouseover = function(){
+            self.timeId && clearInterval(self.timeId);
+            self.arrow.style.display = 'flex';
+
+        };
+        // 鼠标离开打开定时器
+        self.screen.parentElement.onmouseout = function(){
+            self.timeId = setInterval(self.clickHandle.bind(self), 2000);
+            self.arrow.style.display = 'none';
+        }
+    };
+
+    // 轮播事件
+    Carousel.prototype.clickHandle = function () {
+        let self = this;
+        // 如果是最后一张图，直接跳到第一张
+        if (self.index === self.list.length - 1) {
+            self.index = 0;
+
+            // 当点击到最后一张时直接跳到第一张
+            self.ulBox.style.transitionDuration = '0s';
+            self.animate(-self.index * self.width);
+        }
+
+        // 必须有时间延迟，否则self.animate(0);就无法执行
+        setTimeout(function () {
+            self.ulBox.style.transitionDuration = self.durtion;
+            self.index++;
+            self.animate(-self.index * self.width);
+
+            // 如果是最后一张图，则去掉最后一个的class属性，切换到第一个
+            if (self.index === self.list.length - 1) {
+                self.olBox.children[self.olBox.children.length - 1].removeAttribute('class');
+                self.olBox.children[0].className = self.activeClass;
+            } else { // 切换当前选中状态
+                self.switch_sel();
+            }
+        }, 20);
+    };
+
+    // 切换数字按钮的选中状态
+    Carousel.prototype.switch_sel = function(){
+        let self = this;
+        for (let i = 0; i < self.olBox.children.length; i++) {
+            self.olBox.children[i].removeAttribute('class');
+        }
+        self.olBox.children[self.index].className = self.activeClass;
+    };
+
+    let carousel = new Carousel(document.getElementById('screen'));
+    carousel.init();
+
+/*
+* 遇到的问题：
+* 1. 设置自动轮播时调用clickHandle()发现 其中的this指向window。
+* 解决：在调用时绑定this，即 clickHandle.bind(this)
+* 2. 如何实现无缝轮播
+* 2.1 将第一张图片克隆下来放到相框最后一个
+* 2.2 无缝轮播时，需要图片在短时间内跳转（第一图和最后一图之间），使用setTimeout()
+*   可实现先跳转好再完成下一步的动画。（注意：如果不使用setTimeout，跳转动画无法执行）
+* */
+</script>
+</body>
+</html>

@@ -5,9 +5,10 @@ js原生面向对象的轮播图效果
 
 1. 设置自动轮播时调用clickHandle()发现 其中的this指向window。
 
+   - 方法调用中谁调用this指向谁，setInterval中this指向window所以，在定时器中调用一个方法，最好使用.bind(this)
    - 解决：在调用时绑定this，即 clickHandle.bind(this)
 
-2.  如何实现无缝轮播
+2. 如何实现无缝轮播
 
    - 2.1 将第一张图片克隆下来放到相框最后一个
 
